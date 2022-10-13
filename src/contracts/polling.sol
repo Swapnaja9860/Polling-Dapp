@@ -1,6 +1,8 @@
 pragma solidity >=0.4.22 <0.7.0;
 pragma experimental ABIEncoderV2;
 
+// import "truffle/Console.sol";
+
 // pragma solidity >= 0.7.0<0.9.0;
 
 contract Polling {
@@ -23,7 +25,7 @@ contract Polling {
 
     // Voter[] public voters;
     Poll public poll;
-    bool isPoll;
+    bool public isPoll;
 
     // dict of voter and their vote data
     mapping(address => Vote) public votes;
@@ -65,7 +67,12 @@ contract Polling {
         isPoll = true;
 
         pollStart = block.timestamp;
-        pollEnd = block.timestamp + 60; //1 hour=60*60 seconds; replace 60 with 3600 for an 1hr
+        pollEnd = block.timestamp + 90; //1 hour=60*60 seconds; replace 60 with 3600 for an 1hr
+    }
+
+    //explicit getter function for struct because the default getter doesn't return mapping and arrays
+    function getPoll() public view returns (Poll memory) {
+        return poll;
     }
 
     function exists(string memory option) public view returns (bool) {
@@ -104,7 +111,7 @@ contract Polling {
                 winOption = poll.options[i];
             }
         }
-
+        // Console.log(winOption);
         emit GetWinner(winOption, maxCount);
         return winOption;
     }
