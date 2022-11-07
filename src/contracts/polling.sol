@@ -111,7 +111,8 @@ contract Polling {
                 winOption = poll.options[i];
             }
         }
-        // Console.log(winOption);
+        // console.log("===================solidity=================");
+        // console.log(pollState);
         emit GetWinner(winOption, maxCount);
         return winOption;
     }

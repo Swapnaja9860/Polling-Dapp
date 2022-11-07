@@ -2,58 +2,73 @@ import React from 'react';
 import { useState } from 'react';
 
 function Poll(props) {
-   const [title, setTitle] = useState('');
-   const [address, setAddress] = useState('');
-   const [option, setOption] = useState('');
-   const [seloption, setSeloption] = useState('');
-   const [options, setOptions] = useState([]);
 
-   const handleSubmit = (e) => {
+  const [title, setTitle] = useState('');
+  const [option, setOption] = useState('');
+  const [seloption, setSeloption] = useState('');
+  const [options, setOptions] = useState([]);
+  const [ispollCreated, setIspollCreated] = useState(false);
+
+  var pollTitle;
+  const handleSubmit = (e) => {
         e.preventDefault();
-        // console.log(title)
-        // console.log("================option===");
-        // console.log(option);
         props.createPoll(title, options);
-        setTitle('')
+        setIspollCreated(true);
+        pollTitle = title;
+        // setTitle('')
   }
   const handleClick = async(e) => {
         await setOptions(oldArray => [...oldArray, option]);
         setOption('');
-        // console.log("================options===");
-        // console.log(options);
   }
   const handleSubmitVote = (e) => {
         e.preventDefault();
-        // console.log(title)
-        // console.log("================option===");
-        // console.log(option);
-        props.addVote(seloption, address);
-        setAddress('')
+        props.addVote(seloption);
   }
 
+  const handleChange = event => {
+    console.log(event.target.value);
+    setSeloption(event.target.value)
+  };
+
   return (
-    <div><h1>Polling System</h1>
-    
-    <form onSubmit={handleSubmit}>
-        <input type='text' placeholder='Title of the Poll' value={title} onChange={(e)=> setTitle(e.target.value)}></input><br/>
-        <input type='text' placeholder='Add Options' value={option} onChange={(e)=> setOption(e.target.value)}></input>
-        <button type='button' onClick={handleClick}>Add Option</button><br/>
-        <button type='submit'>Create</button>
-    </form>
-    <form onSubmit={handleSubmitVote}>
-      <input type='text' placeholder='address' value={address} onChange={(e)=> setAddress(e.target.value)}></input><br/>
-    
-    {options ?
     <div>
-        <h2> Available Options</h2>
-        { options.map(item => {
-        return <button type='button' onClick={() => setSeloption(item)}>{item}</button>
-    })}
-    </div> : <h2>No Available Options</h2>
-    }
-    <button type='submit'>Vote</button>
-    </form>
+    {!ispollCreated ?
+    <div>
+    <form onSubmit={handleSubmit} class="form-inline">
+        <label><b>Add question for MCQ </b></label><br/>
+        <input class='col-lg-4' type='text' placeholder='Title of the Poll' value={title} onChange={(e)=> setTitle(e.target.value)}></input><br/><br/>
+       
+        <div class="form-group col-lg-3">
+          <label class="sr-only"><b>Add Multiple Choices </b></label><br/>
+          <input type='text' placeholder='Add Options' value={option} onChange={(e)=> setOption(e.target.value)}></input>
+          <button type='button' class="btn btn-primary btn-sm" onClick={handleClick}>Add Choice</button><br/><br/>
+         </div>
+        <button type='submit' class="btn btn-outline-primary btn-lg">Create</button>
+    </form><br/><br/></div> : <h3></h3>}
     
+    <form onSubmit={handleSubmitVote}>
+    {ispollCreated ?
+    <div>
+    <h3>{title}</h3>
+    
+    {options.map((option) => {
+        return <div class="form-check" style={{fontSize: 20}} key={option}>
+                    <input 
+                      type="radio"
+                      class="form-check-input"
+                      value={option}
+                      name='poll'
+                      onClick={(e) => handleChange(e)}
+                    />
+                    <label class="form-check-label">{option}</label>
+                  </div>
+    })}
+    <br/><button class='btn btn-primary btn-lg' type='submit'>Vote</button>
+    </div> : <h6 class="alert alert-info text-center col-lg-5">voting will start once poll is created</h6>
+    }
+   
+    </form>
     </div>
   )
 }

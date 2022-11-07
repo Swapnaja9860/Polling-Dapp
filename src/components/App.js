@@ -9,7 +9,6 @@ const Web3 = require('web3')
 
 function App() {
 
-  const [loading, setLoading] = useState(false);
   const [accounts, setAccounts] = useState([]);
   const [votes, setVotes] = useState([]);
   const [poll_contract, setPollContract] = useState({});
@@ -21,10 +20,12 @@ function App() {
     loadAccount();
   }, []);
 
+  // create a web3 object
   const loadWeb3 = async ()=> {
     if(window.etherum){
       window.web3 = new Web3(window.etherum);
       await window.etherum.enable();
+      window.web3.eth.handleRevert = true
     }else if(window.web3){
       window.web3 = new Web3(window.web3.currentProvider);
     }
@@ -33,18 +34,15 @@ function App() {
     }
   }
 
+  // get the account that is selected in metamask
   const getCurrentAccount = async ()=> {
     // const web3 = window.web3;
-
     let curraccounts = await window.web3.eth.requestAccounts();
-    console.log("================curraccounts==================")
-    console.log(curraccounts)
     return curraccounts
   }
+  
   const loadAccount = async ()=> {
     const accounts = await getCurrentAccount();
-    console.log("================accounts==================")
-    console.log(accounts)
     setAccounts(accounts);
     
     const web3 = window.web3;
@@ -65,9 +63,9 @@ function App() {
 
   //create poll function
   const createPoll = async(title, options) => {
-    setLoading(true);
+   
     await poll_contract.methods.createPoll(title, options).send({ from: accounts[0] }).on('transactionHash', (hash) => {
-        setLoading(false);
+        console.log("Transaction successful")
     })
     const newPoll = await poll_contract.methods.getPoll().call({ from: accounts[0] })
     setquePoll(newPoll)
@@ -76,81 +74,86 @@ function App() {
 
   //add vote function
   const addVote = async(option) => {
-    setLoading(true);
+   
     let currrentAcc = await getCurrentAccount()
-    await poll_contract.methods.addVote(option).send({ from: currrentAcc[0]}).on('transactionHash', (hash) => {
-        setLoading(false);
+  
+    try{
+      await poll_contract.methods.addVote(option).send({ from: currrentAcc[0]}).on('transactionHash', (hash) => {
+      console.log("Transaction successful")
     })
-    
+     
+    }
+    catch(err){
+      var errorMessageInJson = JSON.parse(
+          err.message.slice(err.message.indexOf('data')+6, err.message.length-3)
+        );
+      var errorMessageToShow = errorMessageInJson.data[Object.keys(errorMessageInJson.data)[0]].reason;
+      alert(errorMessageToShow);
+    }    
     // await getVoteCount(option);
     // setquePoll(newPoll)
-
-    // console.log("================account==================")
-    // console.log(account)
   }
 
   const getVoteCount = async(option) => {
     const voteCount = await poll_contract.methods.voteCount(option).call({ from: accounts[0]})
-    console.log("================voteCount==================")
-    console.log(voteCount)
     return voteCount
   }
 
 
   //get winner function
   const getWinner = async() => {
-    // setLoading(true);
-    let currrentAcc = await getCurrentAccount()
-    // const win = await poll_contract.methods.getWinner().send({ from: currrentAcc[0]}).on('transactionHash', (hash) => {
-    //     setLoading(false);
-    // })
-    const win = await poll_contract.methods.getWinner().call({ from: currrentAcc[0]})
-    console.log("======================win=================")
-    console.log(win)
-    console.log(typeof win)
-    setWinner(win);  
-    let voteOption = [];
+    setVotes([]);
+    
+    try{
+      const win = await poll_contract.methods.getWinner().call({ from: accounts[0]})
+      setWinner(win);  
+    }catch(err){
+      var errorMessageInJson = JSON.parse(
+          err.message.slice(24, err.message.length)
+        );
+      var errorMessageToShow = errorMessageInJson.data[Object.keys(errorMessageInJson.data)[0]].reason;
+      alert(errorMessageToShow);
+    }
+    // let votes = [];
     await quePoll.options.map(async(option) => {
         let voteCount = await getVoteCount(option);
-        voteOption.push({
+        setVotes((prevState)=> [...prevState,{
           'option' : option,
           'count' : voteCount
-        })
+        } ])
     })
-    console.log("======================voteOption==================")
-    console.log(voteOption)
-    setVotes(voteOption);
   }
 
 
   return (
-    <div className="App">
-      <Poll createPoll={createPoll} addVote={addVote}/>
-      {console.log("======quePoll=============")} 
-      {console.log(quePoll.title)}
-      {console.log(quePoll.options)}
-      
-      {/* <h2>{loading}</h2> */}
-      {/* { quePoll.options ?
-      <div> */}
-      <h3>VoteCount</h3>
-      {votes.map(vote => {
-        return <div>{vote.option} : {vote.count} </div>
-      })}
-      {/* </div> :
-      <h1>Please Vote</h1>
+    <div className="App" style={{
+        backgroundColor: '#c4d7f5',
+        width : '100%',
+        height : '800px'
+      }}>
+      <div style={{
+        backgroundColor: 'black',
+        width : '100%',
+        height : '100px',
+        color: '#c4d7f5',
+        margin: '0'
+      }}><h1>Polling System</h1> 
+      <small>Create your own poll so that users can vote and get the results</small></div>
 
-    } */}
-    <button type='button' onClick={() => getWinner()}>Winner</button>
-    <h3>Winner</h3>
-    <h3>{winner}</h3>
-    <HistogramChart votes={votes}/>
-    {/* {winner ?
+      <br/>
+      {loading ? <h5>Please wait Data is loading...</h5>: <h4></h4>}
+      <Poll createPoll={createPoll} addVote={addVote}/>
+    
+    {/* <button type='button' class='btn btn-primary btn-lg' disabled={!votes.length} onClick={() => getWinner()}>Get the Winner</button> */}
+    {/* <button type='button' onClick={() => getWinner()}>Get the Winner</button> */}
+    <br/><a style={{ cursor:"pointer" , color:'blue', font:'15'}} onClick={() => getWinner()}>Get the Winner</a>
+  
+    {winner && votes.length ?
     <div>
-        <h2> Winner</h2>
-        <h3>{winner}</h3>
-    </div> : <h2>Please wait to end voting period to see result</h2>
-    } */}
+        <HistogramChart votes={votes}/>
+        <center><h4> Most selected option is <b>'{winner}'</b></h4></center>
+    </div> : <h2></h2>
+    }
     </div>
   );
 }
