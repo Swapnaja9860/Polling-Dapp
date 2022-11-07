@@ -141,7 +141,6 @@ function App() {
       <small>Create your own poll so that users can vote and get the results</small></div>
 
       <br/>
-      {loading ? <h5>Please wait Data is loading...</h5>: <h4></h4>}
       <Poll createPoll={createPoll} addVote={addVote}/>
     
     {/* <button type='button' class='btn btn-primary btn-lg' disabled={!votes.length} onClick={() => getWinner()}>Get the Winner</button> */}
